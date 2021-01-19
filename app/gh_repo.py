@@ -34,6 +34,7 @@ def get_gh_repo_status(snyk_gh_repo, github_token, github_enterprise=False):
     repo_owner = snyk_gh_repo["owner"]
     repo_name = snyk_gh_repo["name"]
     response_message = ""
+    repo_default_branch = ""
 
     headers = {"Authorization": "Bearer %s"}
     headers["Authorization"] = headers["Authorization"] % (github_token)
@@ -46,8 +47,11 @@ def get_gh_repo_status(snyk_gh_repo, github_token, github_enterprise=False):
     try:
         response = requests.get(url=request_url, allow_redirects=False, headers=headers)
         # print("response_code: %d" % response.status_code)
+        # print(f"response default branch -> {response.json()['default_branch']}")
+
         if response.status_code == 200:
             response_message = "Match"
+            repo_default_branch = response.json()['default_branch']
 
         elif response.status_code == 404:
             response_message = "Not Found"
@@ -75,7 +79,8 @@ def get_gh_repo_status(snyk_gh_repo, github_token, github_enterprise=False):
             "repo_name": repo_name,
             "snyk_org_id": snyk_gh_repo["org_id"],
             "repo_owner": repo_owner,
-            "repo_full_name": f"{repo_owner}/{repo_name}"
+            "repo_full_name": f"{repo_owner}/{repo_name}",
+            "repo_default_branch": repo_default_branch
         }
 
     except requests.exceptions.RequestException as err:

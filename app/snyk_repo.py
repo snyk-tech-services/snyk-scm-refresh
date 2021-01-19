@@ -16,6 +16,7 @@ class SnykRepo():
             org_name: str,
             integration_id: str,
             origin: str,
+            branch: str,
             snyk_projects: []
     ):
         self.full_name = full_name
@@ -23,6 +24,7 @@ class SnykRepo():
         self.org_name = org_name
         self.integration_id = integration_id
         self.origin = origin
+        self.branch = branch
         self.snyk_projects = snyk_projects
     def __getitem__(self, item):
         return self.full_name

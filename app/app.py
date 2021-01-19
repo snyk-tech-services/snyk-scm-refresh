@@ -72,37 +72,48 @@ def run():
             log_potential_delete(snyk_repo.org_name, snyk_repo.full_name)
 
         elif gh_repo_status["response_code"] == 200: # project exists and has not been renamed
-            app_print(snyk_repo.org_name,
-                snyk_repo.full_name,
-                f"Checking {str(len(snyk_repo.snyk_projects))} projects for any stale manifests"
-            )
-            deleted_projects = snyk_repo.delete_stale_manifests(common.ARGS.dry_run)
-            for project in deleted_projects:
-                if not common.ARGS.dry_run:
-                    app_print(snyk_repo.org_name,
-                              snyk_repo.full_name,
-                              f"Deleted stale manifest: {project['manifest']}")
-                else:
-                    app_print(snyk_repo.org_name,
-                              snyk_repo.full_name,
-                              f"Would delete stale manifest: {project['manifest']}")
-
-            app_print(snyk_repo.org_name,
+            # snyk has the wrong branch, re-import
+            if gh_repo_status["repo_default_branch"] != snyk_repo.branch:
+                app_print(snyk_repo.org_name,
                       snyk_repo.full_name,
-                      "Looking for new manifests in code repository")
+                      f"Default branch has changed from {snyk_repo.branch}" \
+                          f" -> {gh_repo_status['repo_default_branch']}, submitting import...")
+                if not common.ARGS.dry_run:
+                    repo_import_status = import_manifests(snyk_repo.org_id,
+                                                      gh_repo_status['repo_full_name'],
+                                                      snyk_repo.integration_id)
+            else: #find deltas
+                app_print(snyk_repo.org_name,
+                    snyk_repo.full_name,
+                    f"Checking {str(len(snyk_repo.snyk_projects))} projects for any stale manifests"
+                )
+                deleted_projects = snyk_repo.delete_stale_manifests(common.ARGS.dry_run)
+                for project in deleted_projects:
+                    if not common.ARGS.dry_run:
+                        app_print(snyk_repo.org_name,
+                                  snyk_repo.full_name,
+                                  f"Deleted stale manifest: {project['manifest']}")
+                    else:
+                        app_print(snyk_repo.org_name,
+                                  snyk_repo.full_name,
+                                  f"Would delete stale manifest: {project['manifest']}")
 
-            #if not common.ARGS.dry_run:
-            projects_import = snyk_repo.add_new_manifests(common.ARGS.dry_run)
-
-            if isinstance(projects_import, ImportStatus):
-                import_status_checks.append(projects_import)
                 app_print(snyk_repo.org_name,
                           snyk_repo.full_name,
-                          f"Found {len(projects_import.files)} to import")
-                for file in projects_import.files:
+                          "Looking for new manifests in code repository")
+
+                #if not common.ARGS.dry_run:
+                projects_import = snyk_repo.add_new_manifests(common.ARGS.dry_run)
+
+                if isinstance(projects_import, ImportStatus):
+                    import_status_checks.append(projects_import)
                     app_print(snyk_repo.org_name,
                               snyk_repo.full_name,
-                              f"Importing new manifest: {file['path']}")
+                              f"Found {len(projects_import.files)} to import")
+                    for file in projects_import.files:
+                        app_print(snyk_repo.org_name,
+                                  snyk_repo.full_name,
+                                  f"Importing new manifest: {file['path']}")
 
         # if snyk_repo has been moved/renamed (301), then re-import the entire repo
         # with the new name and remove the old one (make optional)

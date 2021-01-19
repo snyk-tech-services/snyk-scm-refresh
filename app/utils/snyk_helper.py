@@ -37,6 +37,7 @@ def get_snyk_repos_from_snyk_orgs(snyk_orgs, ARGS):
                         snyk_projects[i]["org_name"],
                         snyk_projects[i]["integration_id"],
                         snyk_projects[i]["origin"],
+                        snyk_projects[i]["branch"],
                         repo_projects)
             )
 
@@ -49,6 +50,7 @@ def get_snyk_repos_from_snyk_orgs(snyk_orgs, ARGS):
                         snyk_projects[i-1]["org_name"],
                         snyk_projects[i-1]["integration_id"],
                         snyk_projects[i-1]["origin"],
+                        snyk_projects[i-1]["branch"],
                         repo_projects)
             )
             repo_projects = [project]
@@ -115,6 +117,7 @@ def build_snyk_project_list(snyk_orgs, ARGS):
                 else:
                     branch_from_name = ""
                 split_repo_name = tmp_branch_split[0].split("/")
+                # print(f"project name/branch -> {project.name}/{project.branch}")
                 snyk_gh_projects.append(
                     {
                         "id": project.id,
@@ -128,6 +131,7 @@ def build_snyk_project_list(snyk_orgs, ARGS):
                         "origin": project.origin,
                         "integration_id": integration_id,
                         "branch_from_name": branch_from_name,
+                        "branch": project.branch
                     }
                 )
 
